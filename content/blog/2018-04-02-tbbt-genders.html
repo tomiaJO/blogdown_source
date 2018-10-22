@@ -1,0 +1,146 @@
+---
+title: "TBBT (Tidy)Text analysis 2 - Sentiments across genders"
+author: "Tamas Koncz"
+date: '2018-04-02'
+slug: tbbt-genders
+tags:
+- R
+- tidytext
+categories: text analysis
+---
+
+
+
+<p>My inspiration to write this post was Julia Silge’s <a href="https://pudding.cool/2017/08/screen-direction/">“She giggles, he gallops”</a> on <em>pudding.cool</em>.<br />
+Julia examines 2,000 film scripts, to uncover certain “gender bias” - notably, she compared what are the most frequent words following “he” and “she” in the scripts.</p>
+<p>I’m going to apply the same idea to the subtitle data of the TV series ‘The Big Bang Theory’.<br />
+Just before we dive in - this post is the second in my “TBBT (Tidy)Text analysis” mini-series, if interested, you can find the first one <a href="https://tomiajo.github.io/blog/tbbt-imdb-score-regression/">here</a>, in which I look at the relation between average IMDB scores of episodes and dominating character “mentions”.</p>
+<p><strong>And now, let’s get rolling!</strong></p>
+<p>Data-wise, our starting point is the same as in the first post:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">episode_id</th>
+<th align="left">episode_full_text</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">s1e1</td>
+<td align="left">So if a photon is directed through a plane with two slits in it and either slit is observed, it will not go through both slit…</td>
+</tr>
+<tr class="even">
+<td align="left">s1e2</td>
+<td align="left">Here we go. Pad thai, no peanuts. But does it have peanut oil? I’m not sure. Everyone keep an eye on Howard in case he starts…</td>
+</tr>
+<tr class="odd">
+<td align="left">s1e3</td>
+<td align="left">Alright, just a few more feet. And… here we are, gentlemen, the Gates of Elzebob. Good Lord. Don’t panic. This is what the …</td>
+</tr>
+</tbody>
+</table>
+<p>The approach I’m taking is simple: look at all two-word pairs, where the first world defines the gender. The second word is what we are going to analyze.</p>
+<p>First, we need to slice the text into bigrams:</p>
+<pre class="r"><code>bigrams &lt;- full_episode_text %&gt;%
+             unnest_tokens(output = bigram, 
+                           input  = episode_full_text, 
+                           token  = &quot;ngrams&quot;, 
+                           n      = 2)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">episode_id</th>
+<th align="left">bigram</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">s1e1</td>
+<td align="left">so if</td>
+</tr>
+<tr class="even">
+<td align="left">s1e1</td>
+<td align="left">if a</td>
+</tr>
+<tr class="odd">
+<td align="left">s1e1</td>
+<td align="left">a photon</td>
+</tr>
+<tr class="even">
+<td align="left">s1e1</td>
+<td align="left">photon is</td>
+</tr>
+</tbody>
+</table>
+<p>I’ll cross reference this bigrams list with a gender “lexicon” I have defined earlier, which apart from the usual “he/she”, also contains the names of the important characters from the show (only first 6 lines shown below - for full list, please refer to my <a href="https://github.com/tomiaJO/TEXT_MINING_FINAL_PROJECT/blob/master/gender_word_lexicon.csv">github</a>):</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">gender</th>
+<th align="left">word</th>
+<th align="left">possesive</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">male</td>
+<td align="left">he</td>
+<td align="left">his</td>
+</tr>
+<tr class="even">
+<td align="left">female</td>
+<td align="left">she</td>
+<td align="left">her</td>
+</tr>
+<tr class="odd">
+<td align="left">male</td>
+<td align="left">howard</td>
+<td align="left">howard’s</td>
+</tr>
+<tr class="even">
+<td align="left">female</td>
+<td align="left">penny</td>
+<td align="left">penny’s</td>
+</tr>
+<tr class="odd">
+<td align="left">male</td>
+<td align="left">leonard</td>
+<td align="left">leonard’s</td>
+</tr>
+<tr class="even">
+<td align="left">male</td>
+<td align="left">sheldon</td>
+<td align="left">sheldon’s</td>
+</tr>
+</tbody>
+</table>
+<p>Let’s use this lexicon as a filter (via simple regex), and create separte columns for the two words of the bigrams as well:</p>
+<pre class="r"><code>gender_bigrams &lt;- bigrams %&gt;%
+                    filter(str_detect(bigram, gender_words_regex)) %&gt;%
+                    mutate(gender_word = str_split(bigram, pattern = &quot; &quot;, n = 2, simplify = TRUE)[,1],
+                           word        = str_split(bigram, pattern = &quot; &quot;, n = 2, simplify = TRUE)[,2]) %&gt;%
+                    inner_join(gender_word_lexicon, by = c(&quot;gender_word&quot; = &quot;word&quot;)) %&gt;%
+                    select(gender, word)</code></pre>
+<p>What I am going to do exactly with these word pairs?</p>
+<p>My original idea was to run a tf-idf analysis, to “cluster” the most typical words for each gender.<br />
+However, when I first ran a trial, I noticed something interesting: many words in the “she” category were sensual ones (“feel”, “kissed”, “smiled”…), while for “he” most words were pretty general (“talk”, “sit”, “boy”…).</p>
+<p>This <em>(and the sad fact that most of the words appeared only once or twice, making it hard to do meaningful tf-idf in their raw format)</em> made me pivot somewhat from my starting idea - and I decided to group words by sentiments, and compare those for the two genders.</p>
+<p>For this, I’m using the NRC lexicon, which is built-in accessible in the tidytext R package.</p>
+<pre class="r"><code>sentiments_nrc &lt;- get_sentiments(lexicon = &quot;nrc&quot;)</code></pre>
+<p><img src="/blog/2018-04-02-tbbt-genders_files/figure-html/unnamed-chunk-7-1.png" width="480" style="display: block; margin: auto;" /> A glimpse into the sentiment lexicon’s categories… The lexicon does not contain all English words, but should be more than enough for a light analysis of subtitles.</p>
+<pre class="r"><code>gender_bigrams_w_nrc &lt;- gender_bigrams %&gt;%
+                          inner_join(sentiments_nrc, by = &quot;word&quot;)</code></pre>
+<p>In a short step we match up the sentiments with the bigram collection (above), and the results are ready to be visualized<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>:</p>
+<p><img src="/blog/2018-04-02-tbbt-genders_files/figure-html/unnamed-chunk-9-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p>There is a high likelihood that “she” will be angry in the context mentioned - while “he” is mostly in the positive.<br />
+Probably more interestingly, men are also a lot less likely to “exhibit” any sentiments - maybe their feelings are less talked about?(!)</p>
+<p>None of this should be a starting point for deep conversations about gender roles in Hollywood - if you are looking for that, please head over to Julia’s post I linked in the beginning.</p>
+<p>However, if you were looking for some ideas about what’s in subtitles for some data analysis, I hope I could gave would you a nice glimpse.</p>
+<hr />
+<p>Footnotes:</p>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Methodology used: first, I calculated the ratio of each sentiment group within genders (~= words belonging to the sentiment group / total words for gender). Then, I checked these within-gender frequencies across the two genders, which gave me the ratios - from here, I only had to tidy it up for visualization.<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>
