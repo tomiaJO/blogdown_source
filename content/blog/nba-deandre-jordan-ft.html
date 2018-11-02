@@ -1,0 +1,42 @@
+---
+title: "Did DeAndre Jordan Learn How to Shoot Free Throws?"
+author: "Tamas Koncz"
+date: '2018-11-01'
+tags:
+- R
+- nba
+categories: sports
+---
+
+
+
+<p><strong>At the time of writing this DeAndre Jordan has made 82% of his free throws (on 34 attempts) in the 2018-19 NBA regular season.</strong><br />
+<strong>For those who did not pay attention, this might not raise many eyebrows. However, we are talking about one of the worst free throw shooters in the NBA, achieving a career 45% from the line while taking 100+ attempts every year since his rookie season.</strong></p>
+<p><br></p>
+<p>For a player who was many times sidelined at end of games due to his inability to score points when intentionally fouled, this improvement (however small the sample size) already made some people to notice:</p>
+<p><br></p>
+<div align="center">
+<iframe src="https://www.youtube.com/embed/u-mCIw6pb6U?controls=0&amp;amp;start=303" width="600" height="320" frameborder="0" allowfullscreen=""></iframe>
+</div>
+<p>It was only appropriate for me to go out and see for myself what statistics has to say on the relevance of Jordan’s sudden improvements.</p>
+<div id="this-has-been-years-in-the-making" class="section level2">
+<h2>This has been years in the making</h2>
+<p>The first thing we have to notice that DeAndre did not just suddenly started making free throws at almost double his career mark this season. He was gradually, but surely improving since the ’14-15 season:</p>
+<p><img src="/img/deandre_ft_pct_over_seasons.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>However, until last season we could not be overly confident that these improvements are real.<br />
+Times are changing this season. Even if the sample size is not very big, we can be almost certain that DeAndre Jordan is finally becoming an at least decent shooter from the foul line.</p>
+<p><strong><em>Maybe it’s the atmosphere in Dallas.</em></strong></p>
+</div>
+<div id="what-are-the-chances" class="section level2">
+<h2>What are the chances…?</h2>
+<p>Another way to grasp this problem is to check that <em>if DeAndre didn’t improve from his earlier mark</em>, then <em>what is the chance of him making this many free throws on this many attempts</em> this year.</p>
+<p>To understand this, I simulated DeAndre shooting 34 free throws a 1,000,000 times, using the binomial distribution, with his free throw percentages from over his career, and from last season.</p>
+<p><img src="/img/deandre_ft_simulation.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>The results are reassuring that something has indeed changed.</p>
+<p>If he is still the shooter he was over his career, he would only achieve 28 makes on 34 attempts 7 times out of a million!</p>
+<p>Now, let’s consider that the improvements last year were real, and now he is capable of making 58% of his shots.<br />
+This would be certainly a big step forward - but would still only give DeAndre a 2.3% chance of making 28 or more out of 34! Not something most people would consider “very likely”.</p>
+<p><br></p>
+<p>As a fan, I’m always annoyed when NBA players can’t convert their free throws. C’mon, it’s called the <em>charity stripe</em> for a reason.<br />
+Finally, it seems like his hard work payed out for Jordan. It might be time next summer for him to charge the <a href="https://www.youtube.com/watch?v=ejaGxutMepo">“King” himself</a> for some lessons.</p>
+</div>
